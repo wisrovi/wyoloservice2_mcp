@@ -127,9 +127,10 @@ import json
 import shlex
 
 @mcp.tool()
-def check_dataset_path(path: str) -> Dict[str, Any]:
+def check_dataset_path(path: str, control_host: str, cifs_user: str, cifs_pass: str) -> Dict[str, Any]:
     """
     Verify if a dataset path exists on the remote Samba share by spinning up a lightweight Docker container.
+    The agent must retrieve the Samba credentials (control_host, cifs_user, cifs_pass) from its memory or ask the user.
     """
     cmd = f"""
     /usr/local/bin/mount-cifs.sh >/dev/null 2>&1
@@ -147,9 +148,9 @@ def check_dataset_path(path: str) -> Dict[str, Any]:
     
     docker_cmd = [
         "docker", "run", "--rm", "--privileged",
-        "-e", "CONTROL_HOST=192.168.10.252",
-        "-e", "CIFS_USER=wisrovi",
-        "-e", "CIFS_PASS=wyoloservice",
+        "-e", f"CONTROL_HOST={control_host}",
+        "-e", f"CIFS_USER={cifs_user}",
+        "-e", f"CIFS_PASS={cifs_pass}",
         "wisrovi/train_service:worker_executor_v1.0.0",
         "bash", "-c", cmd
     ]
@@ -161,10 +162,11 @@ def check_dataset_path(path: str) -> Dict[str, Any]:
         return {"error": f"Failed to execute docker check: {str(e)}"}
 
 @mcp.tool()
-def validate_dataset_advanced(dataset_path: str, task: str = "detect") -> Dict[str, Any]:
+def validate_dataset_advanced(dataset_path: str, control_host: str, cifs_user: str, cifs_pass: str, task: str = "detect") -> Dict[str, Any]:
     """
     Validates a YOLO dataset structure by running an inspection script inside a Docker container 
     connected to the remote CIFS share. Supports detect/segment (yaml) and classify (directory).
+    The agent must retrieve the Samba credentials (control_host, cifs_user, cifs_pass) from its memory or ask the user.
     """
     python_script = f"""
 import os
@@ -214,9 +216,9 @@ print(json.dumps(result))
     
     docker_cmd = [
         "docker", "run", "--rm", "--privileged",
-        "-e", "CONTROL_HOST=192.168.10.252",
-        "-e", "CIFS_USER=wisrovi",
-        "-e", "CIFS_PASS=wyoloservice",
+        "-e", f"CONTROL_HOST={control_host}",
+        "-e", f"CIFS_USER={cifs_user}",
+        "-e", f"CIFS_PASS={cifs_pass}",
         "wisrovi/train_service:worker_executor_v1.0.0",
         "bash", "-c", cmd
     ]

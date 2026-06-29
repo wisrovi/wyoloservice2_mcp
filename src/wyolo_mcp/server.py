@@ -33,7 +33,7 @@ async def get_cluster_status() -> Dict[str, Any]:
     """
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{API_URL}/")
+            response = await client.get(f"{API_URL}/health")
             if response.status_code == 200:
                 return {"status": "online", "api_details": response.json()}
             return {"status": "error", "message": f"API returned {response.status_code}"}

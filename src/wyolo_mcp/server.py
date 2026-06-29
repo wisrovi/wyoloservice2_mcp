@@ -21,7 +21,7 @@ API_URL = os.getenv("NEURALFORGE_API_URL", "http://192.168.10.252:23442")
 class TrainingConfig(BaseModel):
     name: str = Field(..., description="Name of the study")
     dataset: str = Field(..., description="Absolute path to the dataset.yaml file")
-    task: str = Field(default="detect", description="Task type: 'detect' (Detection), 'segment' (Segmentation), or 'classify' (Classification)")
+    task: str = Field(..., description="Task type: MUST be 'detect' (Detection), 'segment' (Segmentation), or 'classify' (Classification)")
     epochs: int = Field(100, description="Number of epochs")
     models: List[str] = Field(default=["yolov8n.pt"], description="List of models to try")
     batch_sizes: List[int] = Field(default=[16], description="List of batch sizes")

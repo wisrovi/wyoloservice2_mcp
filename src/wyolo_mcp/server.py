@@ -15,9 +15,6 @@ except ImportError:
 # Initialize FastMCP server
 mcp = FastMCP("NeuralForgeAI-MCP")
 
-# Environment configuration
-API_URL = os.getenv("NEURALFORGE_API_URL", "http://192.168.10.252:23442")
-
 class TrainingConfig(BaseModel):
     name: str = Field(..., description="Name of the study")
     dataset: str = Field(..., description="Absolute path to the dataset.yaml file")
@@ -27,14 +24,15 @@ class TrainingConfig(BaseModel):
     batch_sizes: List[int] = Field(default=[16], description="List of batch sizes")
 
 @mcp.tool()
-async def get_cluster_status() -> Dict[str, Any]:
+async def get_cluster_status(api_url: str) -> Dict[str, Any]:
     """
     Get the overall status of the NeuralForgeAI cluster, including active celery workers 
     and general health of the API.
+    The agent must retrieve api_url (e.g. http://192.168.10.252:23442) from its memory or ask the user.
     """
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{API_URL}/health")
+            response = await client.get(f"{api_url}/health")
             if response.status_code == 200:
                 return {"status": "online", "api_details": response.json()}
             return {"status": "error", "message": f"API returned {response.status_code}"}
@@ -42,14 +40,14 @@ async def get_cluster_status() -> Dict[str, Any]:
             return {"status": "offline", "error": str(e)}
 
 @mcp.tool()
-async def get_study_details(study_id: str) -> Dict[str, Any]:
+async def get_study_details(study_id: str, api_url: str) -> Dict[str, Any]:
     """
     Get detailed telemetry and status of a specific YOLO training study.
     Returns progress, active invoker, and current trial metrics.
     """
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{API_URL}/study/{study_id}")
+            response = await client.get(f"{api_url}/study/{study_id}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"Study not found or API error: {response.text}"}
@@ -57,14 +55,14 @@ async def get_study_details(study_id: str) -> Dict[str, Any]:
             return {"error": str(e)}
 
 @mcp.tool()
-async def cancel_study(study_id: str) -> Dict[str, Any]:
+async def cancel_study(study_id: str, api_url: str) -> Dict[str, Any]:
     """
     Cancel a running training study by its ID. This will stop the active trials 
     and terminate the executor containers.
     """
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(f"{API_URL}/study/{study_id}/cancel")
+            response = await client.post(f"{api_url}/study/{study_id}/cancel")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"Failed to cancel: {response.text}"}
@@ -72,7 +70,7 @@ async def cancel_study(study_id: str) -> Dict[str, Any]:
             return {"error": str(e)}
 
 @mcp.tool()
-async def launch_training(config: TrainingConfig) -> Dict[str, Any]:
+async def launch_training(config: TrainingConfig, api_url: str) -> Dict[str, Any]:
     """
     Launch a new YOLO hyperparameter optimization study on the cluster.
     """
@@ -114,7 +112,7 @@ async def launch_training(config: TrainingConfig) -> Dict[str, Any]:
                 "mode": "public",
                 "priority": "medium"
             }
-            response = await client.post(f"{API_URL}/train", files=files, data=data)
+            response = await client.post(f"{api_url}/train", files=files, data=data)
             
             if response.status_code == 200:
                 return {"success": True, "details": response.json()}

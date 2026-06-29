@@ -23,16 +23,52 @@ class TrainingConfig(BaseModel):
     models: List[str] = Field(default=["yolov8n.pt"], description="List of models to try")
     batch_sizes: List[int] = Field(default=[16], description="List of batch sizes")
 
+import subprocess
+import json
+import shlex
+from pathlib import Path
+
+CONFIG_FILE = Path.home() / ".wyolo_mcp_config.json"
+
+def _get_credentials() -> Dict[str, str]:
+    if not CONFIG_FILE.exists():
+        raise ValueError("Cluster credentials not configured. Please use the 'set_cluster_credentials' tool first.")
+    with open(CONFIG_FILE, 'r') as f:
+        return json.load(f)
+
 @mcp.tool()
-async def get_cluster_status(api_url: str) -> Dict[str, Any]:
+def set_cluster_credentials(api_url: str, control_host: str, cifs_user: str, cifs_pass: str) -> Dict[str, Any]:
+    """
+    Save the API URL and Samba CIFS credentials to a local configuration file.
+    The agent should call this tool when the user provides the cluster details.
+    """
+    config_data = {
+        "api_url": api_url.rstrip('/'),
+        "control_host": control_host,
+        "cifs_user": cifs_user,
+        "cifs_pass": cifs_pass
+    }
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(config_data, f, indent=4)
+        return {"success": True, "message": f"Credentials saved successfully to {CONFIG_FILE}"}
+    except Exception as e:
+        return {"error": f"Failed to save credentials: {str(e)}"}
+
+@mcp.tool()
+async def get_cluster_status() -> Dict[str, Any]:
     """
     Get the overall status of the NeuralForgeAI cluster, including active celery workers 
     and general health of the API.
-    The agent must retrieve api_url (e.g. http://192.168.10.252:23442) from its memory or ask the user.
     """
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{api_url}/health")
+            response = await client.get(f"{creds['api_url']}/health")
             if response.status_code == 200:
                 return {"status": "online", "api_details": response.json()}
             return {"status": "error", "message": f"API returned {response.status_code}"}
@@ -40,14 +76,19 @@ async def get_cluster_status(api_url: str) -> Dict[str, Any]:
             return {"status": "offline", "error": str(e)}
 
 @mcp.tool()
-async def get_study_details(study_id: str, api_url: str) -> Dict[str, Any]:
+async def get_study_details(study_id: str) -> Dict[str, Any]:
     """
     Get detailed telemetry and status of a specific YOLO training study.
     Returns progress, active invoker, and current trial metrics.
     """
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"error": str(e)}
+
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{api_url}/study/{study_id}")
+            response = await client.get(f"{creds['api_url']}/study/{study_id}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"Study not found or API error: {response.text}"}
@@ -55,14 +96,19 @@ async def get_study_details(study_id: str, api_url: str) -> Dict[str, Any]:
             return {"error": str(e)}
 
 @mcp.tool()
-async def cancel_study(study_id: str, api_url: str) -> Dict[str, Any]:
+async def cancel_study(study_id: str) -> Dict[str, Any]:
     """
     Cancel a running training study by its ID. This will stop the active trials 
     and terminate the executor containers.
     """
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"error": str(e)}
+
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(f"{api_url}/study/{study_id}/cancel")
+            response = await client.post(f"{creds['api_url']}/study/{study_id}/cancel")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"Failed to cancel: {response.text}"}
@@ -70,10 +116,15 @@ async def cancel_study(study_id: str, api_url: str) -> Dict[str, Any]:
             return {"error": str(e)}
 
 @mcp.tool()
-async def launch_training(config: TrainingConfig, api_url: str) -> Dict[str, Any]:
+async def launch_training(config: TrainingConfig) -> Dict[str, Any]:
     """
     Launch a new YOLO hyperparameter optimization study on the cluster.
     """
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"error": str(e)}
+
     async with httpx.AsyncClient() as client:
         try:
             import yaml
@@ -112,7 +163,7 @@ async def launch_training(config: TrainingConfig, api_url: str) -> Dict[str, Any
                 "mode": "public",
                 "priority": "medium"
             }
-            response = await client.post(f"{api_url}/train", files=files, data=data)
+            response = await client.post(f"{creds['api_url']}/train", files=files, data=data)
             
             if response.status_code == 200:
                 return {"success": True, "details": response.json()}
@@ -120,16 +171,17 @@ async def launch_training(config: TrainingConfig, api_url: str) -> Dict[str, Any
         except Exception as e:
             return {"error": str(e)}
 
-import subprocess
-import json
-import shlex
 
 @mcp.tool()
-def check_dataset_path(path: str, control_host: str, cifs_user: str, cifs_pass: str) -> Dict[str, Any]:
+def check_dataset_path(path: str) -> Dict[str, Any]:
     """
     Verify if a dataset path exists on the remote Samba share by spinning up a lightweight Docker container.
-    The agent must retrieve the Samba credentials (control_host, cifs_user, cifs_pass) from its memory or ask the user.
     """
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"error": str(e)}
+
     cmd = f"""
     /usr/local/bin/mount-cifs.sh >/dev/null 2>&1
     if [ ! -e "{path}" ]; then
@@ -146,9 +198,9 @@ def check_dataset_path(path: str, control_host: str, cifs_user: str, cifs_pass: 
     
     docker_cmd = [
         "docker", "run", "--rm", "--privileged",
-        "-e", f"CONTROL_HOST={control_host}",
-        "-e", f"CIFS_USER={cifs_user}",
-        "-e", f"CIFS_PASS={cifs_pass}",
+        "-e", f"CONTROL_HOST={creds['control_host']}",
+        "-e", f"CIFS_USER={creds['cifs_user']}",
+        "-e", f"CIFS_PASS={creds['cifs_pass']}",
         "wisrovi/train_service:worker_executor_v1.0.0",
         "bash", "-c", cmd
     ]
@@ -160,12 +212,16 @@ def check_dataset_path(path: str, control_host: str, cifs_user: str, cifs_pass: 
         return {"error": f"Failed to execute docker check: {str(e)}"}
 
 @mcp.tool()
-def validate_dataset_advanced(dataset_path: str, control_host: str, cifs_user: str, cifs_pass: str, task: str = "detect") -> Dict[str, Any]:
+def validate_dataset_advanced(dataset_path: str, task: str = "detect") -> Dict[str, Any]:
     """
     Validates a YOLO dataset structure by running an inspection script inside a Docker container 
     connected to the remote CIFS share. Supports detect/segment (yaml) and classify (directory).
-    The agent must retrieve the Samba credentials (control_host, cifs_user, cifs_pass) from its memory or ask the user.
     """
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"error": str(e)}
+
     python_script = f"""
 import os
 import yaml
@@ -214,9 +270,9 @@ print(json.dumps(result))
     
     docker_cmd = [
         "docker", "run", "--rm", "--privileged",
-        "-e", f"CONTROL_HOST={control_host}",
-        "-e", f"CIFS_USER={cifs_user}",
-        "-e", f"CIFS_PASS={cifs_pass}",
+        "-e", f"CONTROL_HOST={creds['control_host']}",
+        "-e", f"CIFS_USER={creds['cifs_user']}",
+        "-e", f"CIFS_PASS={creds['cifs_pass']}",
         "wisrovi/train_service:worker_executor_v1.0.0",
         "bash", "-c", cmd
     ]

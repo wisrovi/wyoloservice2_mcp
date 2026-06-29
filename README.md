@@ -20,7 +20,7 @@ Añade este servidor a tu archivo de configuración MCP (por ejemplo, en `mcp_se
     "neuralforge-mcp": {
       "command": "wyolo-mcp",
       "env": {
-        "NEURALFORGE_API_URL": "http://192.168.1.68:8000"
+        "NEURALFORGE_API_URL": "http://192.168.10.252:23442"
       }
     }
   }

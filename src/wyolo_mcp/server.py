@@ -16,7 +16,7 @@ except ImportError:
 mcp = FastMCP("NeuralForgeAI-MCP")
 
 # Environment configuration
-API_URL = os.getenv("NEURALFORGE_API_URL", "http://localhost:8000")
+API_URL = os.getenv("NEURALFORGE_API_URL", "http://192.168.10.252:23442")
 
 class TrainingConfig(BaseModel):
     name: str = Field(..., description="Name of the study")

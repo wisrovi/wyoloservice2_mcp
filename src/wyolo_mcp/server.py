@@ -1,8 +1,16 @@
 import os
 import httpx
+import psutil
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from mcp.server.fastmcp import FastMCP
+
+# Intentar importar la nueva librería de data_prep (si está instalada en el mismo entorno)
+try:
+    from wyolo_data_prep import check_yolo_dataset
+    HAS_DATA_PREP = True
+except ImportError:
+    HAS_DATA_PREP = False
 
 # Initialize FastMCP server
 mcp = FastMCP("NeuralForgeAI-MCP")
@@ -101,6 +109,29 @@ def check_dataset_path(path: str) -> Dict[str, Any]:
         "contents": contents[:20] if contents else [],
         "message": "Path found. Showing up to 20 items." if contents else "Path found."
     }
+
+@mcp.tool()
+def get_host_metrics() -> Dict[str, Any]:
+    """
+    Get CPU, RAM, and Disk metrics of the host machine running the MCP server.
+    Useful for diagnosing if the cluster manager is out of resources.
+    """
+    return {
+        "cpu_percent": psutil.cpu_percent(interval=1),
+        "ram_percent": psutil.virtual_memory().percent,
+        "disk_free_gb": psutil.disk_usage('/').free / (1024**3)
+    }
+
+@mcp.tool()
+def validate_dataset_advanced(yaml_path: str) -> Dict[str, Any]:
+    """
+    Validates a YOLO dataset profoundly using the new wyoloservice2_data_prep library.
+    Checks inside the YAML for structural correctness.
+    """
+    if not HAS_DATA_PREP:
+        return {"error": "wyoloservice2_data_prep library is not installed in the MCP environment."}
+    
+    return check_yolo_dataset(yaml_path)
 
 def main():
     # Run the FastMCP server via stdio (standard for Claude Desktop / MCP clients)

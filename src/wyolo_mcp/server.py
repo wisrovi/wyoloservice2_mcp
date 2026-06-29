@@ -154,15 +154,15 @@ def get_host_metrics() -> Dict[str, Any]:
     }
 
 @mcp.tool()
-def validate_dataset_advanced(yaml_path: str) -> Dict[str, Any]:
+def validate_dataset_advanced(dataset_path: str, task: str = "detect") -> Dict[str, Any]:
     """
-    Validates a YOLO dataset profoundly using the new wyoloservice2_data_prep library.
-    Checks inside the YAML for structural correctness.
+    Validates a YOLO dataset profoundly using the wyoloservice2_data_prep library.
+    Checks inside the YAML for structural correctness for detect/segment, or directory structure for classify.
     """
     if not HAS_DATA_PREP:
         return {"error": "wyoloservice2_data_prep library is not installed in the MCP environment."}
     
-    return check_yolo_dataset(yaml_path)
+    return check_yolo_dataset(dataset_path, task_type=task)
 
 import sys
 

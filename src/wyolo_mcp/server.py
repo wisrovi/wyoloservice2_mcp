@@ -21,6 +21,7 @@ API_URL = os.getenv("NEURALFORGE_API_URL", "http://192.168.10.252:23442")
 class TrainingConfig(BaseModel):
     name: str = Field(..., description="Name of the study")
     dataset: str = Field(..., description="Absolute path to the dataset.yaml file")
+    task: str = Field(default="detect", description="Task type: 'detect' (Detection), 'segment' (Segmentation), or 'classify' (Classification)")
     epochs: int = Field(100, description="Number of epochs")
     models: List[str] = Field(default=["yolov8n.pt"], description="List of models to try")
     batch_sizes: List[int] = Field(default=[16], description="List of batch sizes")
@@ -79,15 +80,28 @@ async def launch_training(config: TrainingConfig) -> Dict[str, Any]:
         try:
             import yaml
             
+            # Determine the appropriate fitness metric based on task type
+            fitness_mapping = {
+                "detect": "metrics/mAP50-95(B)",
+                "segment": "metrics/mAP50-95(M)",
+                "classify": "metrics/accuracy_top1"
+            }
+            fitness_metric = fitness_mapping.get(config.task, "metrics/mAP50-95(B)")
+            
             # Generate the YAML config expected by NeuralForgeAI
             yaml_config = {
                 "study_name": config.name,
                 "executor": "yolo_v8",
                 "dataset": config.dataset,
+                "task": config.task,
                 "hyperparameters": {
                     "epochs": config.epochs,
                     "models": config.models,
                     "batch_sizes": config.batch_sizes
+                },
+                "optuna": {
+                    "fitness_metric": fitness_metric,
+                    "direction": "maximize"
                 }
             }
             yaml_content = yaml.dump(yaml_config)

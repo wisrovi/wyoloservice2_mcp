@@ -133,7 +133,10 @@ def validate_dataset_advanced(yaml_path: str) -> Dict[str, Any]:
     
     return check_yolo_dataset(yaml_path)
 
+import sys
+
 def main():
+    print("Starting NeuralForgeAI MCP server on stdio...", file=sys.stderr)
     # Run the FastMCP server via stdio (standard for Claude Desktop / MCP clients)
     mcp.run(transport="stdio")
 

@@ -77,14 +77,31 @@ async def launch_training(config: TrainingConfig) -> Dict[str, Any]:
     """
     async with httpx.AsyncClient() as client:
         try:
-            payload = {
-                "name": config.name,
+            import yaml
+            
+            # Generate the YAML config expected by NeuralForgeAI
+            yaml_config = {
+                "study_name": config.name,
+                "executor": "yolo_v8",
                 "dataset": config.dataset,
-                "epochs": config.epochs,
-                "models": config.models,
-                "batch_sizes": config.batch_sizes
+                "hyperparameters": {
+                    "epochs": config.epochs,
+                    "models": config.models,
+                    "batch_sizes": config.batch_sizes
+                }
             }
-            response = await client.post(f"{API_URL}/train/yolo", json=payload)
+            yaml_content = yaml.dump(yaml_config)
+            
+            # The API expects a multipart form-data upload with a file named 'config_file'
+            files = {
+                "config_file": (f"{config.name}.yaml", yaml_content.encode("utf-8"), "application/x-yaml")
+            }
+            data = {
+                "mode": "public",
+                "priority": "medium"
+            }
+            response = await client.post(f"{API_URL}/train", files=files, data=data)
+            
             if response.status_code == 200:
                 return {"success": True, "details": response.json()}
             return {"success": False, "error": response.text}

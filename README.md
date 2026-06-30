@@ -1,6 +1,6 @@
 # 🚀 NeuralForgeAI MCP Server (`wyoloservice-mcp`)
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/wyoloservice-mcp.svg)](https://pypi.org/project/wyoloservice-mcp/)

@@ -22,6 +22,7 @@ class TrainingConfig(BaseModel):
     epochs: int = Field(100, description="Number of epochs")
     models: List[str] = Field(default=["yolov8n.pt"], description="List of models to try")
     batch_sizes: List[int] = Field(default=[16], description="List of batch sizes")
+    n_trials: int = Field(default=3, description="Number of hyperparameter optimization trials (intentos) to run")
 
 import subprocess
 import json
@@ -173,7 +174,8 @@ async def launch_training(config: TrainingConfig) -> Dict[str, Any]:
                 },
                 "optuna": {
                     "fitness_metric": fitness_metric,
-                    "direction": "maximize"
+                    "direction": "maximize",
+                    "n_trials": config.n_trials
                 }
             }
             yaml_content = yaml.dump(yaml_config)

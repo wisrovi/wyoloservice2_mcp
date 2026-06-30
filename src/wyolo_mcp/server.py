@@ -37,14 +37,14 @@ def _get_credentials() -> Dict[str, str]:
         return json.load(f)
 
 @mcp.tool()
-def set_cluster_credentials(api_url: str, control_host: str, cifs_user: str, cifs_pass: str) -> Dict[str, Any]:
+def set_cluster_credentials(ip: str, cifs_user: str, cifs_pass: str) -> Dict[str, Any]:
     """
-    Save the API URL and Samba CIFS credentials to a local configuration file.
-    The agent should call this tool when the user provides the cluster details.
+    Save the cluster IP and Samba CIFS credentials to a local configuration file.
+    The agent should call this tool when the user provides the cluster IP and credentials.
     """
     config_data = {
-        "api_url": api_url.rstrip('/'),
-        "control_host": control_host,
+        "api_url": f"http://{ip}:23442",
+        "control_host": ip,
         "cifs_user": cifs_user,
         "cifs_pass": cifs_pass
     }

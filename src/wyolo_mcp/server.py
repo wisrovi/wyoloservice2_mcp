@@ -55,11 +55,13 @@ def set_cluster_credentials(ip: str, cifs_user: str, cifs_pass: str) -> Dict[str
     except Exception as e:
         return {"error": f"Failed to save credentials: {str(e)}"}
 
+import asyncio
+
 @mcp.tool()
 async def get_cluster_status() -> Dict[str, Any]:
     """
-    Get the overall status of the NeuralForgeAI cluster, including active celery workers 
-    and general health of the API.
+    Get the overall status of the NeuralForgeAI cluster, including health metrics, 
+    active celery workers (invokers), and the current tasks queue.
     """
     try:
         creds = _get_credentials()
@@ -68,10 +70,31 @@ async def get_cluster_status() -> Dict[str, Any]:
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(f"{creds['api_url']}/health")
-            if response.status_code == 200:
-                return {"status": "online", "api_details": response.json()}
-            return {"status": "error", "message": f"API returned {response.status_code}"}
+            # Peticiones en paralelo para obtener la imagen completa del cluster
+            health_req = client.get(f"{creds['api_url']}/health")
+            workers_req = client.get(f"{creds['api_url']}/workers")
+            tasks_req = client.get(f"{creds['api_url']}/tasks")
+            
+            health_res, workers_res, tasks_res = await asyncio.gather(health_req, workers_req, tasks_req, return_exceptions=True)
+            
+            status_data = {"status": "online"}
+            
+            if not isinstance(health_res, Exception) and health_res.status_code == 200:
+                status_data["health"] = health_res.json()
+            else:
+                status_data["health"] = {"error": "Failed to fetch health"}
+                
+            if not isinstance(workers_res, Exception) and workers_res.status_code == 200:
+                status_data["workers"] = workers_res.json()
+            else:
+                status_data["workers"] = {"error": "Failed to fetch workers"}
+                
+            if not isinstance(tasks_res, Exception) and tasks_res.status_code == 200:
+                status_data["tasks"] = tasks_res.json()
+            else:
+                status_data["tasks"] = {"error": "Failed to fetch tasks queue"}
+                
+            return status_data
         except Exception as e:
             return {"status": "offline", "error": str(e)}
 

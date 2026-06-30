@@ -46,4 +46,4 @@ This MCP server is designed to self-instruct the LLM. For instance:
 - **Auto-Discovery:** When you ask "how is my training going?", the agent is instructed by the MCP docstrings to automatically scan your directory for `.yaml` files, extract the `study_id`, and fetch the status without you providing any IDs.
 
 ---
-**Author:** Jose Manuel Pecero Blanco
+**Author:** William Rodriguez (Wisrovi)

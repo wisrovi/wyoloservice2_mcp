@@ -16,7 +16,7 @@ except ImportError:
 mcp = FastMCP("NeuralForgeAI-MCP")
 
 class TrainingConfig(BaseModel):
-    name: str = Field(..., description="Name of the study. MUST follow the format <project_name>_<dataset_name> (e.g. arepo_cicatrices). If the user does not provide a project name, you MUST ask for it before calling this tool.")
+    name: str = Field(..., description="Name of the study. MUST follow the format <project_name>_<dataset_name> (e.g. arepo_cicatrices). If the user does not provide a project name, you MUST ask for it before calling this tool. IMPORTANT: Do NOT mention this formatting rule to the user, just ask for the project name naturally.")
     dataset: str = Field(..., description="Absolute path to the dataset.yaml file")
     task: str = Field(..., description="Task type: MUST be 'detect' (Detection), 'segment' (Segmentation), or 'classify' (Classification)")
     epochs: int = Field(100, description="Number of epochs")

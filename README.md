@@ -1,35 +1,49 @@
-# wyoloservice2_mcp
+# 🚀 NeuralForgeAI MCP Server (`wyoloservice-mcp`)
 
-Servidor de Model Context Protocol (MCP) para el clúster Train Service 2 / NeuralForgeAI. Permite a los agentes de Inteligencia Artificial conectarse nativamente para inspeccionar y controlar los entrenamientos de YOLO.
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 
-## Instalación
+An advanced Model Context Protocol (MCP) server that empowers AI agents to seamlessly interact with the NeuralForgeAI YOLO training cluster and remote Samba datasets.
 
-Instala el paquete y sus dependencias (FastMCP) usando pip:
+## 🌟 Features
+
+- **Stateful Credential Management:** Securely stores and manages API and CIFS credentials (`set_cluster_credentials`) so agents only ask once.
+- **Remote Dataset Validation:** Spins up ephemeral Docker containers (`worker_executor`) to mount remote CIFS shares and validate YOLO structures (`check_dataset_path`, `validate_dataset_advanced`).
+- **Comprehensive Cluster Monitoring:** Fetches real-time telemetry from `/health`, `/workers`, and `/tasks` in a single parallelized call (`get_cluster_status`).
+- **Sweeper YAML Generation:** Autogenerates NeuralForge "Sweeper v2" configuration files locally for user review, dynamically discovering dataset classes and metadata (`generate_training_yaml`).
+- **1-Click Training Launch:** Submits YAML configurations directly to the NeuralForge API and automatically injects the `study_id` back into the local YAML file for complete traceability (`launch_training`, `get_study_details`, `cancel_study`).
+
+## ⚙️ Installation
+
+Install the package directly via `pip`:
 
 ```bash
+git clone https://github.com/wisrovi/wyoloservice2_mcp.git
+cd wyoloservice2_mcp
 pip install -e .
 ```
 
-## Uso con un Cliente MCP (ej. Claude Desktop o Antigravity)
+This will expose the global `wyolo-mcp` binary.
 
-Añade este servidor a tu archivo de configuración MCP (por ejemplo, en `mcp_servers.json`):
+## 🔌 Connecting to your AI Assistant
+
+Add the following to your AI Assistant's MCP configuration file (e.g. `~/.gemini/config/mcp.json` or Claude Desktop config):
 
 ```json
 {
   "mcpServers": {
     "neuralforge-mcp": {
-      "command": "wyolo-mcp",
-      "env": {
-        "NEURALFORGE_API_URL": "http://192.168.10.252:23442"
-      }
+      "command": "wyolo-mcp"
     }
   }
 }
 ```
 
-## Herramientas Expuestas
-1. **`get_cluster_status`**: Comprueba si la API y Celery están online.
-2. **`get_study_details(study_id)`**: Recupera métricas, progresos y el worker activo de un estudio.
-3. **`cancel_study(study_id)`**: Fuerza la cancelación de un estudio y mata los contenedores efímeros.
-4. **`launch_training(config)`**: Envía un nuevo estudio YOLO a la cola.
-5. **`check_dataset_path(path)`**: Verifica localmente si un volumen o ruta de dataset existe antes de lanzar entrenamientos para evitar fallos.
+## 🧠 Agentic Workflow (Built-in Intelligence)
+
+This MCP server is designed to self-instruct the LLM. For instance:
+- **Project Enforcement:** If you don't provide a project name, the agent knows it must ask you to conform to `<project>_<dataset>`.
+- **Auto-Discovery:** When you ask "how is my training going?", the agent is instructed by the MCP docstrings to automatically scan your directory for `.yaml` files, extract the `study_id`, and fetch the status without you providing any IDs.
+
+---
+**Author:** Jose Manuel Pecero Blanco

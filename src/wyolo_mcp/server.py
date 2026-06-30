@@ -16,12 +16,11 @@ except ImportError:
 mcp = FastMCP("NeuralForgeAI-MCP")
 
 class TrainingConfig(BaseModel):
-    name: str = Field(..., description="Name of the study")
+    name: str = Field(..., description="Name of the study. MUST follow the format <project_name>_<dataset_name> (e.g. arepo_cicatrices). If the user does not provide a project name, you MUST ask for it before calling this tool.")
     dataset: str = Field(..., description="Absolute path to the dataset.yaml file")
     task: str = Field(..., description="Task type: MUST be 'detect' (Detection), 'segment' (Segmentation), or 'classify' (Classification)")
     epochs: int = Field(100, description="Number of epochs")
     models: List[str] = Field(default=["yolov8n.pt"], description="List of models to try")
-    batch_sizes: List[int] = Field(default=[16], description="List of batch sizes")
     imgsz: List[int] = Field(default=[640], description="List of image sizes (imgsz) to try")
     n_trials: int = Field(default=3, description="Number of hyperparameter optimization trials (intentos) to run")
     metadata_content: str = Field(default="YOLO training dataset", description="A short description of what the dataset classifies or detects. Determine this by running validate_dataset_advanced first.")
@@ -200,8 +199,7 @@ def generate_training_yaml(config: TrainingConfig, output_dir: str = ".") -> Dic
                 "search_space": {
                     "model": ["choice"] + config.models if config.models else ["choice", "yolov8n.pt"],
                     "train": {
-                        "imgsz": ["choice"] + config.imgsz if config.imgsz else ["choice", 640],
-                        "batch": ["choice"] + config.batch_sizes if config.batch_sizes else ["choice", 16]
+                        "imgsz": ["choice"] + config.imgsz if config.imgsz else ["choice", 640]
                     }
                 }
             }

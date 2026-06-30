@@ -104,6 +104,14 @@ async def get_study_details(study_id: str) -> Dict[str, Any]:
     """
     Get detailed telemetry and status of a specific YOLO training study.
     Returns progress, active invoker, and current trial metrics.
+    
+    IMPORTANT WORKFLOW FOR AGENTS: 
+    When the user asks 'how is my training going?' (or similar) without providing a study_id:
+    1. DO NOT ask the user for the study_id immediately.
+    2. First, search the current working directory for `.yaml` files.
+    3. Read the discovered `.yaml` files to check if they contain a `study_id` field.
+    4. If you find a `study_id` inside a YAML file, automatically use this tool with that ID to check its status.
+    5. Only ask the user for the ID or file path if you cannot find any `.yaml` files with a `study_id` in the current directory.
     """
     try:
         creds = _get_credentials()

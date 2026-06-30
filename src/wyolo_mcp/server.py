@@ -22,7 +22,10 @@ class TrainingConfig(BaseModel):
     epochs: int = Field(100, description="Number of epochs")
     models: List[str] = Field(default=["yolov8n.pt"], description="List of models to try")
     batch_sizes: List[int] = Field(default=[16], description="List of batch sizes")
+    imgsz: List[int] = Field(default=[640], description="List of image sizes (imgsz) to try")
     n_trials: int = Field(default=3, description="Number of hyperparameter optimization trials (intentos) to run")
+    metadata_content: str = Field(default="YOLO training dataset", description="A short description of what the dataset classifies or detects. Determine this by running validate_dataset_advanced first.")
+    metadata_documentation: str = Field(default="Auto-generated training study", description="Longer documentation about the dataset classes and analysis. Determine this by running validate_dataset_advanced first.")
 
 import subprocess
 import json
@@ -156,9 +159,10 @@ def generate_training_yaml(config: TrainingConfig, output_dir: str = ".") -> Dic
     """
     import yaml
     import os
+    import getpass
+    import socket
     
     try:
-        # Determine the appropriate fitness metric based on task type
         fitness_mapping = {
             "detect": "metrics/mAP50-95(B)",
             "segment": "metrics/mAP50-95(M)",
@@ -166,27 +170,46 @@ def generate_training_yaml(config: TrainingConfig, output_dir: str = ".") -> Dic
         }
         fitness_metric = fitness_mapping.get(config.task, "metrics/mAP50-95(B)")
         
-        # Generate the YAML config expected by NeuralForgeAI
+        try:
+            author = getpass.getuser()
+        except:
+            author = socket.gethostname()
+            
         yaml_config = {
-            "study_name": config.name,
-            "executor": "yolo_v8",
-            "dataset": config.dataset,
-            "task": config.task,
-            "hyperparameters": {
-                "epochs": config.epochs,
-                "models": config.models,
-                "batch_sizes": config.batch_sizes
+            "model": config.models[0] if config.models else "yolov8n.pt",
+            "type": "yolo",
+            "metadata": {
+                "content": config.metadata_content,
+                "author": author,
+                "documentation": config.metadata_documentation
             },
-            "optuna": {
-                "fitness_metric": fitness_metric,
+            "train": {
+                "task": config.task,
+                "data": config.dataset,
+                "epochs": config.epochs,
+                "imgsz": config.imgsz[0] if config.imgsz else 640
+            },
+            "sweeper": {
+                "version": 2,
+                "study_name": config.name,
                 "direction": "maximize",
-                "n_trials": config.n_trials
+                "fitness": fitness_metric,
+                "algorithm": "optuna",
+                "tune": False,
+                "n_trials": config.n_trials,
+                "search_space": {
+                    "model": ["choice"] + config.models if config.models else ["choice", "yolov8n.pt"],
+                    "train": {
+                        "imgsz": ["choice"] + config.imgsz if config.imgsz else ["choice", 640],
+                        "batch": ["choice"] + config.batch_sizes if config.batch_sizes else ["choice", 16]
+                    }
+                }
             }
         }
         
         output_path = os.path.abspath(os.path.join(output_dir, f"{config.name}.yaml"))
-        with open(output_path, 'w') as f:
-            yaml.dump(yaml_config, f, default_flow_style=False)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            yaml.dump(yaml_config, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
             
         return {"success": True, "yaml_path": output_path, "message": f"YAML configuration generated and saved to {output_path}"}
     except Exception as e:

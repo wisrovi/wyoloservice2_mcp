@@ -158,6 +158,34 @@ For remote dataset validation, it employs the `subprocess` module to orchestrate
 
 ---
 
+## Example to use
+
+### send a new train
+
+<img width="938" height="356" alt="image" src="https://github.com/user-attachments/assets/624c01cb-8894-4a03-af1f-ab0a1d862a88" />
+
+<img width="931" height="694" alt="image" src="https://github.com/user-attachments/assets/31ebccb0-6ca2-4a5c-aef6-85134d03c568" />
+
+<img width="869" height="923" alt="image" src="https://github.com/user-attachments/assets/c66278ac-2e4d-4092-a8f9-7512fa910138" />
+
+<img width="869" height="923" alt="image" src="https://github.com/user-attachments/assets/a226eccd-ce09-44fc-9873-efe198b8f06b" />
+
+
+
+
+### get status over a train started
+
+<img width="934" height="292" alt="image" src="https://github.com/user-attachments/assets/47b3f9fd-7672-4cb6-b931-b059d4f6fde8" />
+
+<img width="938" height="743" alt="image" src="https://github.com/user-attachments/assets/2d1e66c4-e00a-4720-9d2f-2c2c6092c612" />
+
+<img width="879" height="933" alt="image" src="https://github.com/user-attachments/assets/247877ea-57e9-4bf1-b4a8-55e741def8db" />
+
+<img width="924" height="945" alt="image" src="https://github.com/user-attachments/assets/dc11cbb2-4ced-4220-bbcb-ebcda3a05dfd" />
+
+
+---
+
 ## 📝 License
 This project is open-sourced under the MIT License.
 

@@ -186,6 +186,21 @@ For remote dataset validation, it employs the `subprocess` module to orchestrate
 
 ---
 
+## 📜 Changelog & Version History
+
+### Version 0.3.0 (Current Release) - 2026-07-03
+*   **Optuna cancellation tool integration:** Added `cancel_study(study_id)` tool mapping the `/study/{study_id}/cancel` FastAPI endpoint.
+*   **Prompt instructions tuning:** Enhanced tools docstrings with explicit agent guidelines to automatically search the active directory for `.yaml` files containing a `study_id` before querying metrics.
+
+### Version 0.2.0 - 2026-05-20
+*   **Asynchronous parallel status checks:** Implemented `get_cluster_status()` grouping parallel API requests.
+*   **Remote dataset validation:** Integrated docker subprocess calls to execute validations on local hosts.
+
+### Version 0.1.0 (Initial Release) - 2026-02-28
+*   FastMCP stdio server exposing credential config and base studies retrieval tools.
+
+---
+
 ## 📝 License
 This project is open-sourced under the MIT License.
 

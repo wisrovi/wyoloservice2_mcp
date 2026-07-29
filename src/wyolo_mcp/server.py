@@ -377,12 +377,129 @@ print(json.dumps(result))
     try:
         result = subprocess.run(docker_cmd, capture_output=True, text=True, check=True)
         # Extract the JSON line from stdout (ignoring any other print noise)
-        for line in result.stdout.strip().split('\\n'):
+        for line in result.stdout.strip().split('\n'):
             if line.startswith('{"valid"'):
                 return json.loads(line)
         return json.loads(result.stdout.strip())
     except Exception as e:
         return {"error": f"Failed to execute docker validation: {str(e)}"}
+
+
+@mcp.tool()
+async def manage_invoker_queues(
+    worker_ip: str = Field(..., description="IP address of the target invoker worker (e.g., 192.168.1.54)"),
+    action: str = Field(..., description="Action to perform: 'pause' (out of public queues) or 'resume' (back to public queues)"),
+    mode: str = Field("temporal", description="Pause mode: 'temporal' (resume after X hours) or 'perpetual' (wait for manual resume)"),
+    hours: float = Field(4.0, description="Number of hours for temporal pause (default: 4.0)")
+) -> Dict[str, Any]:
+    """
+    Control the public queue consumption mode of a specific invoker node remotely.
+    This will update the persistent status in Redis and send instant Celery signals.
+    """
+    import time
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"error": f"Failed to retrieve cluster credentials: {str(e)}"}
+
+    redis_host = creds.get("control_host")
+    redis_port = 23437  # default port
+    redis_db = 0        # default db
+
+    # 1. Update State in Redis
+    try:
+        import redis
+        redis_client = redis.Redis(host=redis_host, port=redis_port, db=redis_db)
+        state_key = f"invoker:{worker_ip}:pause_state"
+        until_key = f"invoker:{worker_ip}:pause_until"
+
+        if action == "pause":
+            if mode == "temporal":
+                pause_until = time.time() + (hours * 3600)
+                redis_client.set(state_key, "paused_temporal")
+                redis_client.set(until_key, str(pause_until))
+                redis_msg = f"Set state to 'paused_temporal' until timestamp {pause_until} ({hours} hours)"
+            else:
+                redis_client.set(state_key, "paused_perpetual")
+                redis_client.delete(until_key)
+                redis_msg = "Set state to 'paused_perpetual'"
+        else:
+            redis_client.set(state_key, "active")
+            redis_client.delete(until_key)
+            redis_msg = "Set state to 'active' (resumed)"
+    except ImportError:
+        return {"error": "Required library 'redis' is not installed in the MCP environment."}
+    except Exception as e:
+        return {"error": f"Failed to update state in Redis: {str(e)}"}
+
+    # 2. Send instant control command to destination node via Celery
+    try:
+        from celery import Celery
+        redis_url = f"redis://{redis_host}:{redis_port}/{redis_db}"
+        app = Celery("ml_cluster", broker=redis_url, backend=redis_url)
+        
+        node_name = f"celery@wyolo_invoker_{worker_ip}"
+        public_queues = ["gpus_high", "gpus_medium", "gpus_low"]
+        
+        results = []
+        for queue in public_queues:
+            if action == "pause":
+                response = app.control.cancel_consumer(
+                    queue,
+                    destination=[node_name],
+                    reply=True,
+                    timeout=2.0
+                )
+            else:
+                response = app.control.add_consumer(
+                    queue,
+                    destination=[node_name],
+                    reply=True,
+                    timeout=2.0
+                )
+            results.append((queue, response))
+            
+        success = False
+        node_responses = {}
+        for queue, response in results:
+            if response:
+                for item in response:
+                    if isinstance(item, dict):
+                        for node, status in item.items():
+                            node_responses[f"{node}:{queue}"] = status.get('ok', status)
+                            success = True
+                    else:
+                        node_responses[queue] = item
+                        success = True
+            else:
+                node_responses[queue] = "No response (worker offline)"
+                
+        return {
+            "success": True,
+            "redis_update": redis_msg,
+            "celery_signals": {
+                "sent_to": node_name,
+                "node_status": "responsive" if success else "offline (state saved in Redis for startup)",
+                "responses": node_responses
+            }
+        }
+    except ImportError:
+        return {
+            "success": True,
+            "redis_update": redis_msg,
+            "celery_signals": {
+                "warning": "Required library 'celery' is not installed in the MCP environment, but state was saved to Redis."
+            }
+        }
+    except Exception as e:
+        return {
+            "success": True,
+            "redis_update": redis_msg,
+            "celery_signals": {
+                "error": f"Failed to send immediate Celery signals: {str(e)} (state was saved in Redis)"
+            }
+        }
+
 
 import sys
 

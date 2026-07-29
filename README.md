@@ -1,6 +1,6 @@
 # 🚀 NeuralForgeAI MCP Server (`wyoloservice-mcp`)
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/wyoloservice-mcp.svg)](https://pypi.org/project/wyoloservice-mcp/)
@@ -129,6 +129,8 @@ When connected, the AI automatically gains access to the following toolkit:
    - Fetches live Optuna trial progress, metrics, and active invokers.
 8. `cancel_study(study_id)`
    - Terminates a running study on the cluster.
+9. `manage_invoker_queues(worker_ip, action, mode, hours)`
+   - Remotely pauses (temporally or perpetually) or resumes public queue consumption on a specific invoker node.
 
 ---
 
@@ -188,7 +190,10 @@ For remote dataset validation, it employs the `subprocess` module to orchestrate
 
 ## 📜 Changelog & Version History
 
-### Version 0.3.0 (Current Release) - 2026-07-03
+### Version 0.4.0 (Current Release) - 2026-07-29
+*   **Invoker Queue Management:** Added `manage_invoker_queues` tool to remotely pause (temporal/perpetual) or resume public queue consumption on any specific invoker node by setting persistent states in Redis and sending instant Celery signals.
+
+### Version 0.3.0 - 2026-07-03
 *   **Optuna cancellation tool integration:** Added `cancel_study(study_id)` tool mapping the `/study/{study_id}/cancel` FastAPI endpoint.
 *   **Prompt instructions tuning:** Enhanced tools docstrings with explicit agent guidelines to automatically search the active directory for `.yaml` files containing a `study_id` before querying metrics.
 

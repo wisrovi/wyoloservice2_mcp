@@ -206,7 +206,10 @@ For remote dataset validation, it employs the `subprocess` module to orchestrate
 
 ## 📜 Changelog & Version History
 
-### Version 0.4.2 (Current Release) - 2026-07-31
+### Version 0.4.3 (Current Release) - 2026-07-31
+*   **Broadcast Docker Pull:** Added `trigger_broadcast_docker_pull` tool to send Celery broadcast remote control signals to all active nodes, forcing them to execute a `docker pull` on the specified image for immediate updates.
+
+### Version 0.4.2 - 2026-07-31
 *   **Study Name Grouping:** Removed the timestamp suffix from the Optuna/MLflow `study_name` in `launch_private_test_training` to allow runs targeting the same task type and IP to be grouped together under a single MLflow experiment.
 
 ### Version 0.4.1 - 2026-07-31

@@ -536,34 +536,120 @@ async def manage_invoker_queues(
 async def launch_private_test_training(task_type: str, ip_address: str) -> Dict[str, Any]:
     """
     Launch a private base test training study targeted directly to a specific worker IP.
+    This tool is fully self-contained and does not require local config files.
     
     Args:
         task_type: Type of YOLO task to test: 'detection', 'classification', or 'segmentation'
         ip_address: Physical IP address of the target invoker worker (e.g. '192.168.1.39')
     """
-    import os
     import yaml
     import time
     
-    # Path mappings for the 3 base config files
-    paths_map = {
-        "segmentation": "/home/william.rodriguez/Documents/w_libraries/train_service2/wyoloservice2_worker/executor_v2.0/wtrain/examples/ArchitecturePlan/base_config.yaml",
-        "classification": "/home/william.rodriguez/Documents/w_libraries/train_service2/wyoloservice2_worker/executor_v2.0/wtrain/examples/colorball.v8i.multiclass/base_config.yaml",
-        "detection": "/home/william.rodriguez/Documents/w_libraries/train_service2/wyoloservice2_worker/executor_v2.0/wtrain/examples/Deteksi_komponen_elektronik.v1i/base_config.yaml"
+    # Embedded configurations for absolute portability
+    configs_map = {
+        "segmentation": """
+model: "yolo26n-seg.pt"
+type: "yolo"
+train:
+  batch: -1
+  data: "/examples/ArchitecturePlan/data.yaml"
+  epochs: 2
+  imgsz: 640
+  plots: true
+sweeper:
+  version: 1
+  algorithm: optuna
+  direction: maximize
+  study_name: "architecture_segmentation"
+  fitness: "metrics/mAP50(M)"
+  tune: false
+  sampler: "TPESampler"
+  n_trials: 1
+  search_space:
+    model: [ "choice", "yolov8n-seg.pt" ]
+    train:
+      imgsz: [ "choice", 416 ]
+      lr0: [ "loguniform", 1e-5, 1e-2 ]
+extras:
+  gpu:
+    id: 0
+    limit: 0.95
+metadata:
+  content: "Este es un experimento de clasificacion de imagenes."
+  author: "William Rodriguez"
+  documentation: "Este modelo fue entrenado con datos del 2025."
+""",
+        "classification": """
+model: "yolo26n-cls.pt"
+type: "yolo"
+train:
+  batch: -1
+  data: "/examples/colorball.v8i.multiclass/"
+  epochs: 5
+  imgsz: 640
+  plots: false
+sweeper:
+  version: 1
+  algorithm: optuna
+  direction: maximize
+  study_name: "color_ball_classification"
+  fitness: "metrics/accuracy_top1"
+  tune: false
+  sampler: "TPESampler"
+  n_trials: 1
+  search_space:
+    model: [ "choice", "yolov8n-cls.pt" ]
+    train:
+      imgsz: [ "choice", 416 ]
+      lr0: [ "loguniform", 1e-5, 1e-2 ]
+extras:
+  gpu:
+    id: 0
+    limit: 0.95
+metadata:
+  content: "Este es un experimento de clasificacion de imagenes."
+  author: "William Rodriguez"
+  documentation: "Este modelo fue entrenado con datos del 2025."
+""",
+        "detection": """
+model: "yolo26n.pt"
+type: "yolo"
+train:
+  batch: -1
+  data: "/examples/Deteksi_komponen_elektronik.v1i/data.yaml"
+  epochs: 2
+  imgsz: 640
+  plots: true
+sweeper:
+  version: 1
+  algorithm: optuna
+  direction: maximize
+  study_name: "component_detection"
+  fitness: "metrics/mAP50"
+  tune: false
+  sampler: "TPESampler"
+  n_trials: 1
+  search_space:
+    model: [ "choice", "yolov8n.pt" ]
+    train:
+      imgsz: [ "choice", 416 ]
+      lr0: [ "loguniform", 1e-5, 1e-2 ]
+extras:
+  gpu:
+    id: 0
+    limit: 0.95
+metadata:
+  content: "Este es un experimento de clasificacion de imagenes."
+  author: "William Rodriguez"
+  documentation: "Este modelo fue entrenado con datos del 2025."
+"""
     }
     
     task_type = task_type.lower().strip()
-    if task_type not in paths_map:
+    if task_type not in configs_map:
         return {
             "success": False,
             "error": f"Invalid task_type '{task_type}'. Supported types: 'detection', 'classification', 'segmentation'"
-        }
-        
-    config_path = paths_map[task_type]
-    if not os.path.exists(config_path):
-        return {
-            "success": False,
-            "error": f"Base config file not found at path: {config_path}"
         }
         
     try:
@@ -572,13 +658,9 @@ async def launch_private_test_training(task_type: str, ip_address: str) -> Dict[
         return {"success": False, "error": f"Credentials error: {str(e)}"}
         
     try:
-        # Read the YAML config file
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config_data = yaml.safe_load(f)
-            
-        if not isinstance(config_data, dict):
-            return {"success": False, "error": "Invalid base config YAML file format."}
-            
+        # Parse the embedded YAML config
+        config_data = yaml.safe_load(configs_map[task_type])
+        
         # Enrich config data for forced private execution
         if "sweeper" not in config_data:
             config_data["sweeper"] = {}

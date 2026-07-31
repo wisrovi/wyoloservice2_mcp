@@ -700,6 +700,76 @@ metadata:
             
     except Exception as e:
         return {"success": False, "error": f"Unexpected error during launch: {str(e)}"}
+@mcp.tool()
+async def trigger_broadcast_docker_pull(image_name: str = "wisrovi/train_service:worker_executor_v1.0.0") -> Dict[str, Any]:
+    """
+    Send a broadcast remote control command to all active Celery worker invokers 
+    to force them to execute 'docker pull' on the specified image.
+    
+    Args:
+        image_name: The Docker image to pull (e.g. 'wisrovi/train_service:worker_executor_v1.0.0')
+    """
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"success": False, "error": f"Credentials error: {str(e)}"}
+        
+    redis_url = f"redis://{creds['control_host']}:23437/0"
+    
+    try:
+        from celery import Celery
+        # Initialize celery application pointing to the broker
+        app = Celery('tasks', broker=redis_url)
+        
+        # Send broadcast control command
+        # Celery control broadcast returns a list of responses from the workers
+        responses = app.control.broadcast(
+            "force_docker_pull",
+            arguments={"image_name": image_name},
+            reply=True,
+            timeout=8.0
+        )
+        
+        if not responses:
+            return {
+                "success": False,
+                "message": "No active workers responded. Make sure the invoker nodes are online."
+            }
+            
+        formatted_responses = {}
+        success_count = 0
+        failed_count = 0
+        
+        for response in responses:
+            for node, details in response.items():
+                if isinstance(details, dict):
+                    status = details.get("status", "unknown")
+                    if status == "success":
+                        success_count += 1
+                    else:
+                        failed_count += 1
+                    formatted_responses[node] = details
+                else:
+                    failed_count += 1
+                    formatted_responses[node] = {"status": "error", "error": str(details)}
+                    
+        return {
+            "success": True,
+            "image": image_name,
+            "summary": f"Broadcast pull sent. {success_count} nodes succeeded, {failed_count} nodes failed/timed out.",
+            "responses": formatted_responses
+        }
+        
+    except ImportError:
+        return {
+            "success": False,
+            "error": "Required library 'celery' is not installed in the MCP execution environment."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to send Celery broadcast command: {str(e)}"
+        }
 
 
 import sys

@@ -107,6 +107,19 @@ Edit your `claude_desktop_config.json`:
 }
 ```
 
+
+### For Opencode
+Edit your `~/.config/opencode/opencode.jsonc`:
+```json
+{
+  "mcpServers": {
+    "neuralforge-mcp": {
+      "command": "wyolo-mcp"
+    }
+  }
+}
+```
+
 ### For Cursor IDE
 Navigate to `Cursor Settings > Features > MCP` and add a new server using the command `wyolo-mcp`.
 

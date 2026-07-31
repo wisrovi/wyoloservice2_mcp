@@ -86,7 +86,10 @@ Edit your `~/.gemini/config/mcp.json`:
 {
   "mcpServers": {
     "neuralforge-mcp": {
-      "command": "wyolo-mcp"
+      "command": "</paht/to/environment>",
+      "env": {
+        "NEURALFORGE_API_URL": "http://<control_host_ip>:23442"
+      }
     }
   }
 }

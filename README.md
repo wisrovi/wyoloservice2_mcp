@@ -206,7 +206,10 @@ For remote dataset validation, it employs the `subprocess` module to orchestrate
 
 ## 📜 Changelog & Version History
 
-### Version 0.4.1 (Current Release) - 2026-07-31
+### Version 0.4.2 (Current Release) - 2026-07-31
+*   **Study Name Grouping:** Removed the timestamp suffix from the Optuna/MLflow `study_name` in `launch_private_test_training` to allow runs targeting the same task type and IP to be grouped together under a single MLflow experiment.
+
+### Version 0.4.1 - 2026-07-31
 *   **Enriched Cluster Telemetry:** Upgraded the `get_cluster_status` tool to automatically resolve the physical IP address of workers executing active GPU training tasks and generate exact `docker logs` and persistent logging `ssh` commands.
 *   **Launch Private Test Training:** Added a fully self-contained `launch_private_test_training` tool to launch a base test training study (supporting 'detection', 'classification', or 'segmentation') targeted directly to a specific worker IP using forced private routing parameters.
 

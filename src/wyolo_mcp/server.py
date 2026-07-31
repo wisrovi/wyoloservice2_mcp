@@ -532,6 +532,92 @@ async def manage_invoker_queues(
                 "error": f"Failed to send immediate Celery signals: {str(e)} (state was saved in Redis)"
             }
         }
+@mcp.tool()
+async def launch_private_test_training(task_type: str, ip_address: str) -> Dict[str, Any]:
+    """
+    Launch a private base test training study targeted directly to a specific worker IP.
+    
+    Args:
+        task_type: Type of YOLO task to test: 'detection', 'classification', or 'segmentation'
+        ip_address: Physical IP address of the target invoker worker (e.g. '192.168.1.39')
+    """
+    import os
+    import yaml
+    import time
+    
+    # Path mappings for the 3 base config files
+    paths_map = {
+        "segmentation": "/home/william.rodriguez/Documents/w_libraries/train_service2/wyoloservice2_worker/executor_v2.0/wtrain/examples/ArchitecturePlan/base_config.yaml",
+        "classification": "/home/william.rodriguez/Documents/w_libraries/train_service2/wyoloservice2_worker/executor_v2.0/wtrain/examples/colorball.v8i.multiclass/base_config.yaml",
+        "detection": "/home/william.rodriguez/Documents/w_libraries/train_service2/wyoloservice2_worker/executor_v2.0/wtrain/examples/Deteksi_komponen_elektronik.v1i/base_config.yaml"
+    }
+    
+    task_type = task_type.lower().strip()
+    if task_type not in paths_map:
+        return {
+            "success": False,
+            "error": f"Invalid task_type '{task_type}'. Supported types: 'detection', 'classification', 'segmentation'"
+        }
+        
+    config_path = paths_map[task_type]
+    if not os.path.exists(config_path):
+        return {
+            "success": False,
+            "error": f"Base config file not found at path: {config_path}"
+        }
+        
+    try:
+        creds = _get_credentials()
+    except Exception as e:
+        return {"success": False, "error": f"Credentials error: {str(e)}"}
+        
+    try:
+        # Read the YAML config file
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config_data = yaml.safe_load(f)
+            
+        if not isinstance(config_data, dict):
+            return {"success": False, "error": "Invalid base config YAML file format."}
+            
+        # Enrich config data for forced private execution
+        if "sweeper" not in config_data:
+            config_data["sweeper"] = {}
+            
+        timestamp = int(time.time())
+        config_data["sweeper"]["debug"] = ip_address
+        config_data["sweeper"]["study_name"] = f"test_private_{task_type}_{ip_address.replace('.', '_')}_{timestamp}"
+        
+        # Serialize the modified config data back to YAML string
+        yaml_content = yaml.dump(config_data, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        filename = f"test_private_{task_type}_{ip_address}_{timestamp}.yaml"
+        
+        # Send the file to the NeuralForge API
+        async with httpx.AsyncClient() as client:
+            files = {
+                "config_file": (filename, yaml_content.encode("utf-8"), "application/x-yaml")
+            }
+            data = {
+                "mode": "private",
+                "worker_name": ip_address
+            }
+            
+            response = await client.post(f"{creds['api_url']}/train", files=files, data=data)
+            
+            if response.status_code == 200:
+                return {
+                    "success": True,
+                    "study_type": task_type,
+                    "target_ip": ip_address,
+                    "study_name": config_data["sweeper"]["study_name"],
+                    "api_response": response.json()
+                }
+            return {
+                "success": False,
+                "error": f"API responded with status code {response.status_code}: {response.text}"
+            }
+            
+    except Exception as e:
+        return {"success": False, "error": f"Unexpected error during launch: {str(e)}"}
 
 
 import sys

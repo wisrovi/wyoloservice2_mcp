@@ -667,7 +667,7 @@ metadata:
             
         timestamp = int(time.time())
         config_data["sweeper"]["debug"] = ip_address
-        config_data["sweeper"]["study_name"] = f"test_private_{task_type}_{ip_address.replace('.', '_')}_{timestamp}"
+        config_data["sweeper"]["study_name"] = f"test_private_{task_type}_{ip_address.replace('.', '_')}"
         
         # Serialize the modified config data back to YAML string
         yaml_content = yaml.dump(config_data, default_flow_style=False, allow_unicode=True, sort_keys=False)

@@ -93,7 +93,40 @@ async def get_cluster_status() -> Dict[str, Any]:
                 status_data["workers"] = {"error": "Failed to fetch workers"}
                 
             if not isinstance(tasks_res, Exception) and tasks_res.status_code == 200:
-                status_data["tasks"] = tasks_res.json()
+                tasks_data = tasks_res.json()
+                
+                # Enrich active running tasks with resolved IP addresses and SSH logging commands
+                import re
+                workers_dict = status_data["workers"].get("workers", {}) if "workers" in status_data else {}
+                running_tasks = tasks_data.get("running", [])
+                
+                for task in running_tasks:
+                    worker_name = task.get("worker")
+                    task_name = task.get("name", "")
+                    
+                    # Extract IP address from the worker
+                    invoker_ip = "Unknown"
+                    if workers_dict and worker_name in workers_dict:
+                        info = workers_dict[worker_name]
+                        if isinstance(info, list) and len(info) > 0:
+                            invoker_ip = info[0]
+                    else:
+                        match = re.search(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', worker_name or "")
+                        if match:
+                            invoker_ip = match.group(1)
+                    
+                    task["worker_ip"] = invoker_ip
+                    
+                    if "train_on_gpu" in task_name and invoker_ip not in ("Unknown", "managers"):
+                        executor_name = f"wyolo_executor_{invoker_ip}"
+                        task["log_commands"] = {
+                            "docker_logs": f"ssh -t wyolo@{invoker_ip} \"docker logs -f {executor_name}\"",
+                            "tail_log_file": f"ssh -t wyolo@{invoker_ip} \"tail -f /home/wyolo/train_service_results/logs_{executor_name}.txt\""
+                        }
+                    else:
+                        task["log_commands"] = None
+                
+                status_data["tasks"] = tasks_data
             else:
                 status_data["tasks"] = {"error": "Failed to fetch tasks queue"}
                 

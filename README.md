@@ -192,6 +192,7 @@ For remote dataset validation, it employs the `subprocess` module to orchestrate
 
 ### Version 0.4.0 (Current Release) - 2026-07-29
 *   **Invoker Queue Management:** Added `manage_invoker_queues` tool to remotely pause (temporal/perpetual) or resume public queue consumption on any specific invoker node by setting persistent states in Redis and sending instant Celery signals.
+*   **Enriched Cluster Telemetry:** Upgraded the `get_cluster_status` tool to automatically resolve the physical IP address of workers executing active GPU training tasks and generate exact `docker logs` and persistent logging `ssh` commands.
 
 ### Version 0.3.0 - 2026-07-03
 *   **Optuna cancellation tool integration:** Added `cancel_study(study_id)` tool mapping the `/study/{study_id}/cancel` FastAPI endpoint.

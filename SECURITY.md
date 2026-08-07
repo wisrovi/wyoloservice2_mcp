@@ -13,7 +13,7 @@ We currently provide security updates for the following versions:
 
 If you discover any security-related issues or vulnerabilities, please **DO NOT** report them in the public GitHub issue tracker.
 
-Instead, please send an email directly to the project lead at `william.rodriguez@example.com` (or your official contact email). 
+Instead, please send an email directly to the project lead at `wisrovi.rodriguez@gmail.com` (or your official contact email). 
 
 Please include:
 - A detailed description of the vulnerability.

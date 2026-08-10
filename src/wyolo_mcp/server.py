@@ -772,6 +772,47 @@ async def trigger_broadcast_docker_pull(image_name: str = "wisrovi/train_service
         }
 
 
+@mcp.tool()
+def download_mlflow_trial_artifacts(run_id: str) -> Dict[str, Any]:
+    """
+    Download all artifacts (EDA, weights, reports) for a specific MLflow Run ID, 
+    zip them into a single archive, and return the absolute path to the zip file.
+    """
+    import os
+    import tempfile
+    import shutil
+    try:
+        creds = _get_credentials()
+        mlflow_uri = f"http://{creds['control_host']}:5000"
+    except Exception as e:
+        return {"error": f"Failed to retrieve cluster credentials: {str(e)}"}
+        
+    try:
+        from mlflow.client import MlflowClient
+        
+        client = MlflowClient(tracking_uri=mlflow_uri)
+        temp_dir = tempfile.mkdtemp(prefix=f"mlflow_run_{run_id}_")
+        
+        # Download all artifacts for the run
+        local_dir = client.download_artifacts(run_id, "", dst_path=temp_dir)
+        
+        # Zip the contents
+        zip_path = os.path.join(tempfile.gettempdir(), f"artifacts_{run_id}")
+        shutil.make_archive(zip_path, 'zip', local_dir)
+        
+        # Clean up the unzipped directory
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        return {
+            "success": True, 
+            "zip_path": f"{zip_path}.zip",
+            "message": f"Artifacts downloaded and zipped successfully."
+        }
+    except ImportError:
+        return {"error": "Required library 'mlflow' is not installed in the MCP environment."}
+    except Exception as e:
+        return {"error": f"Failed to download artifacts from MLflow: {str(e)}"}
+
 import sys
 
 def main():

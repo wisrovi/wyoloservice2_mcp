@@ -773,10 +773,11 @@ async def trigger_broadcast_docker_pull(image_name: str = "wisrovi/train_service
 
 
 @mcp.tool()
-def download_mlflow_trial_artifacts(run_id: str) -> Dict[str, Any]:
+def download_mlflow_study_artifacts(study_id: str) -> Dict[str, Any]:
     """
-    Download all artifacts (EDA, weights, reports) for a specific MLflow Run ID, 
-    zip them into a single archive, and return the absolute path to the zip file.
+    Download all artifacts (EDA, weights, reports) for an entire NeuralForge Study 
+    (which maps to an MLflow Experiment). It fetches all trials (runs), zips them, 
+    and returns the absolute path to the zip file.
     """
     import os
     import tempfile
@@ -791,14 +792,34 @@ def download_mlflow_trial_artifacts(run_id: str) -> Dict[str, Any]:
         from mlflow.client import MlflowClient
         
         client = MlflowClient(tracking_uri=mlflow_uri)
-        temp_dir = tempfile.mkdtemp(prefix=f"mlflow_run_{run_id}_")
         
-        # Download all artifacts for the run
-        local_dir = client.download_artifacts(run_id, "", dst_path=temp_dir)
+        # Try to find the experiment by name (study_id) or by ID
+        experiment = client.get_experiment_by_name(study_id)
+        if not experiment:
+            try:
+                experiment = client.get_experiment(study_id)
+            except:
+                pass
+                
+        if not experiment:
+            return {"error": f"Could not find an MLflow experiment with name or ID: {study_id}"}
+            
+        # Get all runs (trials) for this study
+        runs = client.search_runs(experiment_ids=[experiment.experiment_id])
+        if not runs:
+            return {"error": f"No trials (runs) found for study {study_id}"}
+            
+        temp_dir = tempfile.mkdtemp(prefix=f"study_{study_id}_")
         
-        # Zip the contents
-        zip_path = os.path.join(tempfile.gettempdir(), f"artifacts_{run_id}")
-        shutil.make_archive(zip_path, 'zip', local_dir)
+        # Download artifacts for each run into its own subdirectory
+        for run in runs:
+            run_dir = os.path.join(temp_dir, f"trial_{run.info.run_id}")
+            os.makedirs(run_dir, exist_ok=True)
+            client.download_artifacts(run.info.run_id, "", dst_path=run_dir)
+        
+        # Zip the entire study directory
+        zip_path = os.path.join(tempfile.gettempdir(), f"study_artifacts_{study_id}")
+        shutil.make_archive(zip_path, 'zip', temp_dir)
         
         # Clean up the unzipped directory
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -806,12 +827,12 @@ def download_mlflow_trial_artifacts(run_id: str) -> Dict[str, Any]:
         return {
             "success": True, 
             "zip_path": f"{zip_path}.zip",
-            "message": f"Artifacts downloaded and zipped successfully."
+            "message": f"Artifacts for {len(runs)} trials downloaded and zipped successfully."
         }
     except ImportError:
         return {"error": "Required library 'mlflow' is not installed in the MCP environment."}
     except Exception as e:
-        return {"error": f"Failed to download artifacts from MLflow: {str(e)}"}
+        return {"error": f"Failed to download study artifacts from MLflow: {str(e)}"}
 
 import sys
 

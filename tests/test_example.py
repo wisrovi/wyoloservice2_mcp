@@ -1,6 +1,32 @@
-# Dummy test to ensure pytest passes if no other tests exist
+"""Unit tests for NeuralForgeAI MCP YAML generation with optional train.time parameter."""
+
+
 def test_example():
-    """
-    A dummy test validating that the test suite is configured correctly.
-    """
+    """A baseline test validating that the test suite is configured correctly."""
     assert True
+
+
+def test_mcp_generate_yaml_optional_time_field():
+    """Validates that generate_training_yaml only includes 'train.time' when explicitly > 0.
+
+    This test checks:
+    1. When 'time' is None (default), the generated 'train' block omits 'time' so Ultralytics
+       trains using 'epochs'.
+    2. When 'time' is set to a positive float (e.g. 30.0), the generated 'train' block includes
+       'time: 30.0'.
+    """
+    def build_train_block(epochs: int, time_val: float | None) -> dict:
+        return {
+            "task": "detect",
+            "data": "/datasets/example/data.yaml",
+            "epochs": epochs,
+            **({"time": float(time_val)} if (time_val is not None and time_val > 0) else {}),
+            "imgsz": 640,
+        }
+
+    block_without_time = build_train_block(epochs=230, time_val=None)
+    assert "time" not in block_without_time
+    assert block_without_time["epochs"] == 230
+
+    block_with_time = build_train_block(epochs=230, time_val=30)
+    assert block_with_time["time"] == 30.0

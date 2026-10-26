@@ -20,6 +20,7 @@ class TrainingConfig(BaseModel):
     dataset: str = Field(..., description="Absolute path to the dataset.yaml file")
     task: str = Field(..., description="Task type: MUST be 'detect' (Detection), 'segment' (Segmentation), or 'classify' (Classification)")
     epochs: int = Field(100, description="Number of epochs")
+    time: Optional[float] = Field(default=None, description="Optional max training time per trial in hours. If omitted/None, Ultralytics trains by epochs (and infrastructure timeouts use 12h as base reference). If set > 0 (e.g. 30), Ultralytics overrides epochs to train for that duration, and Invoker (1.3x) / Redis (2.0x) timeouts scale automatically.")
     models: List[str] = Field(default=["yolov8n.pt"], description="List of models to try")
     imgsz: List[int] = Field(default=[640], description="List of image sizes (imgsz) to try")
     n_trials: int = Field(default=3, description="Number of hyperparameter optimization trials (intentos) to run")
@@ -219,6 +220,7 @@ def generate_training_yaml(config: TrainingConfig, output_dir: str = ".") -> Dic
                 "task": config.task,
                 "data": config.dataset,
                 "epochs": config.epochs,
+                **({"time": float(config.time)} if (config.time is not None and config.time > 0) else {}),
                 "imgsz": config.imgsz[0] if config.imgsz else 640
             },
             "sweeper": {

@@ -7,7 +7,7 @@
 
 # 🚀 NeuralForgeAI MCP Server (`wyoloservice-mcp`)
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
+[![Version](https://img.shields.io/badge/version-0.4.5-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/wyoloservice-mcp.svg)](https://pypi.org/project/wyoloservice-mcp/)
@@ -145,7 +145,27 @@ When connected, the AI automatically gains access to the following toolkit:
 4. `validate_dataset_advanced(dataset_path, task)`
    - Deeply inspects the remote dataset to extract classes, counts, and directory integrity.
 5. `generate_training_yaml(config, output_dir)`
-   - Builds a strict NeuralForge Sweeper v2 YAML. Enforces naming conventions (`<project>_<dataset>`).
+   - Builds a strict NeuralForge Sweeper v2 YAML. Enforces naming conventions (`<project>_<dataset>`) and supports optional `time` (in hours) to switch Ultralytics from epoch-based training to time-bounded training with automatic `1.3x` Invoker and `2.0x` Redis timeout scaling.
+
+---
+
+## 🧰 Technology Stack & Key Libraries
+*   **Protocol & Server Framework:** Model Context Protocol (`FastMCP` / `mcp`).
+*   **HTTP & Async Networking:** `httpx`, `asyncio`.
+*   **Data Validation & Serialization:** `Pydantic` (`BaseModel`, `Field`), `PyYAML`.
+*   **System & Container Integration:** `psutil`, `subprocess` (Docker CIFS dataset validation), `wyolo_data_prep`.
+*   **Testing & Coverage:** `pytest`, `pytest-cov` executed inside Docker.
+
+---
+
+## 🧪 Running Unit Tests & Coverage (Docker)
+```bash
+# Execute unit tests inside a Docker container
+bash run_tests.sh
+
+# Generate code coverage report inside a Docker container
+bash coverage.sh
+```
 6. `launch_training(yaml_path)`
    - Pushes the local YAML to the cluster and auto-injects the returned `study_id` back into the file.
 7. `get_study_details(study_id)`
@@ -257,6 +277,7 @@ If you use this project in academic research, you are required to cite this repo
 
 
 ## Changelog
+- **v0.4.5 (2026-10-26)**: Added optional `time` parameter support to `TrainingConfig` and `generate_training_yaml` tool for time-bounded YOLO training with auto-scaled timeouts.
 - Bumped version due to License update to PolyForm Noncommercial and Dual Licensing model.
 
 ---

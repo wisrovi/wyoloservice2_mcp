@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.4.6] - 2026-10-28
+### Added
+- Optional `until_time` field in `manage_invoker_queues` MCP tool to allow pausing invoker nodes until a specific wall-clock time (`"HH:MM"`).
+- Unit test for scheduled pause calculation in `tests/test_example.py`.
+
 ## [0.4.5] - 2026-10-26
 ### Added
 - Optional `time` field in `TrainingConfig` and `generate_training_yaml` tool to support time-bounded training in Ultralytics YOLO with automatic infrastructure timeout scaling.

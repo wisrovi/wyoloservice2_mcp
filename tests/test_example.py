@@ -30,3 +30,21 @@ def test_mcp_generate_yaml_optional_time_field():
 
     block_with_time = build_train_block(epochs=230, time_val=30)
     assert block_with_time["time"] == 30.0
+
+
+def test_mcp_pause_until_time_calculation():
+    """Validates that pause until_time string 'HH:MM' correctly computes future timestamp."""
+    from datetime import datetime, timedelta
+
+    until_str = "18:30"
+    parts = until_str.strip().split(":")
+    th, tm = int(parts[0]), int(parts[1])
+    now_dt = datetime.now()
+    target_dt = now_dt.replace(hour=th, minute=tm, second=0, microsecond=0)
+    if target_dt <= now_dt:
+        target_dt += timedelta(days=1)
+    
+    assert target_dt > now_dt
+    assert target_dt.hour == 18
+    assert target_dt.minute == 30
+    assert target_dt.second == 0

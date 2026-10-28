@@ -7,7 +7,7 @@
 
 # 🚀 NeuralForgeAI MCP Server (`wyoloservice-mcp`)
 
-[![Version](https://img.shields.io/badge/version-0.4.5-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
+[![Version](https://img.shields.io/badge/version-0.4.6-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/wyoloservice-mcp.svg)](https://pypi.org/project/wyoloservice-mcp/)
@@ -277,6 +277,7 @@ If you use this project in academic research, you are required to cite this repo
 
 
 ## Changelog
+- **v0.4.6 (2026-10-28)**: Added optional `until_time` parameter support to `manage_invoker_queues` tool for scheduling invoker pause wakeup at a specific wall-clock time (`"HH:MM"`).
 - **v0.4.5 (2026-10-26)**: Added optional `time` parameter support to `TrainingConfig` and `generate_training_yaml` tool for time-bounded YOLO training with auto-scaled timeouts.
 - Bumped version due to License update to PolyForm Noncommercial and Dual Licensing model.
 

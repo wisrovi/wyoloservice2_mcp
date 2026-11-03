@@ -1,3 +1,3 @@
-"""
-MCP Server for NeuralForgeAI (Train Service 2).
-"""
+"""NeuralForgeAI MCP Server Package."""
+
+__version__ = "0.5.0"

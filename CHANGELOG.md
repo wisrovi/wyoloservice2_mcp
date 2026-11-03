@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.1] - 2026-11-03
+### Added
+- **Vision Style Injection in Generated YAML:** `generate_training_yaml` now explicitly emits `style` parameter matching `config.task` (`detect`, `segment`, `classify`, etc.) to drive downstream Optuna objective fitness auto-mapping.
+
 ## [0.5.0] - 2026-11-03
 ### Added
 - Integration with Kubernetes Cluster Admin API (`recommend_training_node`, `estimate_study_duration`, `preflight_check_node`).

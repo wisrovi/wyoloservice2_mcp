@@ -219,6 +219,7 @@ def generate_training_yaml(config: TrainingConfig, output_dir: str = ".") -> Dic
         yaml_config = {
             "model": config.models[0] if config.models else "yolo26n.pt",
             "type": "yolo",
+            "style": config.task,
             "metadata": {
                 "content": config.metadata_content,
                 "author": author,

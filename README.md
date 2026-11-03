@@ -284,7 +284,8 @@ If you use this project in academic research, you are required to cite this repo
 
 
 ## Changelog
-- **v0.4.6 (2026-10-28)**: Added optional `until_time` parameter support to `manage_invoker_queues` tool for scheduling invoker pause wakeup at a specific wall-clock time (`"HH:MM"`).
+- **v0.5.1 (2026-11-03)**: Added vision style injection in `generate_training_yaml` matching task types for downstream Optuna fitness auto-mapping.
+- **v0.5.0 (2026-11-03)**: Added K8s cluster admin inspection tools (`recommend_training_node`, `estimate_study_duration`, `preflight_check_node`), XAI metrics inspection tools, and surgical artifact downloading.
 - **v0.4.5 (2026-10-26)**: Added optional `time` parameter support to `TrainingConfig` and `generate_training_yaml` tool for time-bounded YOLO training with auto-scaled timeouts.
 - Bumped version due to License update to PolyForm Noncommercial and Dual Licensing model.
 

@@ -147,46 +147,40 @@ Navigate to `Cursor Settings > Features > MCP` and add a new server using the co
 
 ## 🛠️ Available Tools (Agent Capabilities)
 
-When connected, the AI automatically gains access to the following toolkit:
+When connected, the AI automatically gains access to an extensive 15-tool enterprise MLOps toolkit:
 
 1. `set_cluster_credentials(ip, cifs_user, cifs_pass)`
-   - Saves cluster IP and Samba credentials to the local config file.
+   - Saves cluster IP and Samba CIFS credentials securely to the local configuration file.
 2. `get_cluster_status()`
-   - Aggregates `/health`, `/workers`, and `/tasks` into a single online diagnostic report.
+   - Aggregates `/health`, `/workers`, and `/tasks` into a unified diagnostic telemetry report with IP resolution and logging commands.
 3. `check_dataset_path(dataset_path)`
-   - Performs a quick remote existence check on the Samba share via Docker.
+   - Performs a rapid remote existence and permission check on the remote Samba share via Docker.
 4. `validate_dataset_advanced(dataset_path, task)`
-   - Deeply inspects the remote dataset to extract classes, counts, and directory integrity.
+   - Deeply inspects the remote dataset structure, extracting classes, image counts, label bounding boxes, and directory integrity.
 5. `generate_training_yaml(config, output_dir)`
-   - Builds a strict NeuralForge Sweeper v2 YAML. Enforces naming conventions (`<project>_<dataset>`) and supports optional `time` (in hours) to switch Ultralytics from epoch-based training to time-bounded training with automatic `1.3x` Invoker and `2.0x` Redis timeout scaling.
-
----
-
-## 🧰 Technology Stack & Key Libraries
-*   **Protocol & Server Framework:** Model Context Protocol (`FastMCP` / `mcp`).
-*   **HTTP & Async Networking:** `httpx`, `asyncio`.
-*   **Data Validation & Serialization:** `Pydantic` (`BaseModel`, `Field`), `PyYAML`.
-*   **System & Container Integration:** `psutil`, `subprocess` (Docker CIFS dataset validation), `wyolo_data_prep`.
-*   **Testing & Coverage:** `pytest`, `pytest-cov` executed inside Docker.
-
----
-
-## 🧪 Running Unit Tests & Coverage (Docker)
-```bash
-# Execute unit tests inside a Docker container
-bash run_tests.sh
-
-# Generate code coverage report inside a Docker container
-bash coverage.sh
-```
+   - Generates strict NeuralForge Sweeper v2 YAML descriptors. Full support for **YOLO26** architectures, multi-task targets (`detect`, `segment`, `classify`, `obb`, `pose`), Optuna samplers (`tpe`, `cmaes`), and post-training XAI toggles.
 6. `launch_training(yaml_path)`
-   - Pushes the local YAML to the cluster and auto-injects the returned `study_id` back into the file.
+   - Submits the training job to the cluster and automatically writes back the assigned `study_id` into the local YAML file.
 7. `get_study_details(study_id)`
-   - Fetches live Optuna trial progress, metrics, and active invokers.
+   - Fetches live Optuna trial progress, trial loss/mAP curves, active invokers, and execution status.
 8. `cancel_study(study_id)`
-   - Terminates a running study on the cluster.
+   - Gracefully terminates a running study and its active worker containers across the cluster.
 9. `manage_invoker_queues(worker_ip, action, mode, hours)`
-   - Remotely pauses (temporally or perpetually) or resumes public queue consumption on a specific invoker node.
+   - Remotely pauses (temporarily until a specified time or perpetually) or resumes queue consumption on a specific GPU invoker.
+10. `recommend_training_node(min_vram_gb, batch_size)`
+    - Queries the Kubernetes Cluster Admin API to recommend the optimal worker node based on GPU VRAM headroom, thermal load, and queue saturation.
+11. `estimate_study_duration(dataset_path, epochs, model)`
+    - Projects expected training completion time in hours and minutes using historical cluster throughput benchmarks.
+12. `preflight_check_node(worker_ip, dataset_yaml)`
+    - Validates node registration, CIFS storage reachability, and YAML configuration before job dispatch.
+13. `get_study_xai_metrics(study_id)`
+    - Retrieves Explainable AI metrics from MLflow, including **Deletion AUC** fidelity scores, adversarial degradation (**FGSM/PGD**), and uncertainty quantification.
+14. `get_study_heatmaps_summary(study_id, top_n)`
+    - Lists generated visual attention heatmaps (**Eigen-CAM** / **Grad-CAM**) from `extras/model_focus/` with direct download URLs.
+15. `download_study_artifact(study_id, artifact_type, trial_id, output_path)`
+    - Surgically retrieves specific assets (`best_weights`, `llm_report`, `xai_heatmaps`, or `latex_tables`) without downloading massive multi-gigabyte ZIP archives.
+16. `download_mlflow_study_artifacts(study_id)`
+    - Downloads and packages all trials and checkpoints into a single consolidated archive.
 
 ---
 

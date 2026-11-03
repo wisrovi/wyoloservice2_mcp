@@ -7,12 +7,25 @@
 
 # 🚀 NeuralForgeAI MCP Server (`wyoloservice-mcp`)
 
-[![Version](https://img.shields.io/badge/version-0.4.6-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/wisrovi/wyoloservice2_mcp)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/wyoloservice-mcp.svg)](https://pypi.org/project/wyoloservice-mcp/)
 
 An advanced, state-of-the-art **Model Context Protocol (MCP)** server that empowers AI agents to seamlessly interact with the NeuralForgeAI YOLO training cluster, remote Samba datasets, and distributed worker nodes. Designed and architected by William Rodriguez (Wisrovi), this MCP bridges the gap between Large Language Models and complex, remote MLOps infrastructure.
+
+---
+
+## 🛠️ Key Technologies and Libraries
+
+The `wyoloservice-mcp` server is built on a modern asynchronous Python architecture utilizing the following key technologies and corporate libraries:
+
+- **FastMCP / Model Context Protocol (v1.30+):** Implements the official MCP standard protocol for exposing tools, prompts, and resources over stdio to LLM agents (Claude Desktop, Google Antigravity, OpenAI).
+- **HTTPX & AnyIO:** High-performance asynchronous HTTP client used for concurrent queries to the Kubernetes Cluster Admin API and distributed Celery worker endpoints.
+- **Pydantic v2:** Robust type validation and schema generation for MCP tool parameters and training configurations.
+- **MLflow Client:** Direct tracking and artifact inspection for experiments, models, and post-training explainability metrics.
+- **PyYAML:** Safe parsing and serializing of complex YOLO and Optuna Sweeper v2 training descriptors.
+- **psutil:** Cross-platform system and process resource monitoring.
 
 ---
 

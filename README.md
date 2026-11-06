@@ -283,7 +283,26 @@ This project uses a **PolyForm Noncommercial License** model:
 If you use this project in academic research, you are required to cite this repository using the provided `CITATION.cff` and notify the author with a link to your publication.
 
 
+## Key Technologies and Libraries
+- **Language & Runtime:** Python 3.10+
+- **Protocol Framework:** Model Context Protocol (MCP standard, FastMCP)
+- **Pipeline & Orchestration Engine:** wpipe (DAG execution & state pipeline)
+- **HTTP Client:** HTTPX (async client with parallel gather)
+- **Data Validation & Serializers:** Pydantic v2, PyYAML
+- **Cluster Distributed Backend:** Celery, Redis
+- **Experiment Tracking:** MLflow Client
+- **Testing & Quality Assurance:** Pytest, Pytest-asyncio, Docker isolated runner
+
+## WPipe Architecture
+The MCP service is structured following the WPipe architecture:
+- `dto/`: Pydantic Data Transfer Objects (`TrainingConfig`).
+- `states/`: Discrete WPipe pipeline steps (`mcp_startup_step`).
+- `pipelines.py`: Orchestrates DAG execution (`mcp_server_pipeline`).
+- `src/wyolo_mcp/utils/`: Modularized utility toolsets under 200 lines (`cluster_tools`, `dataset_tools`, `training_tools`, `estimator_tools`, `study_tools`, `artifact_tools`, `invoker_tools`, `test_launcher`, `xai_tools`).
+- `src/wyolo_mcp/server.py`: FastMCP server registration and entrypoint.
+
 ## Changelog
+- **v0.5.2 (2026-11-06)**: Refactored repository into modular WPipe architecture. Decomposed `server.py` into dedicated single-responsibility utility modules under 200 lines, introduced `dto/` with Pydantic `TrainingConfig`, and established `mcp_server_pipeline`.
 - **v0.5.1 (2026-11-03)**: Added vision style injection in `generate_training_yaml` matching task types for downstream Optuna fitness auto-mapping.
 - **v0.5.0 (2026-11-03)**: Added K8s cluster admin inspection tools (`recommend_training_node`, `estimate_study_duration`, `preflight_check_node`), XAI metrics inspection tools, and surgical artifact downloading.
 - **v0.4.5 (2026-10-26)**: Added optional `time` parameter support to `TrainingConfig` and `generate_training_yaml` tool for time-bounded YOLO training with auto-scaled timeouts.
@@ -291,12 +310,12 @@ If you use this project in academic research, you are required to cite this repo
 
 ---
 
-## 👤 Autor & Afiliación Oficial
+## 👤 Author & Official Affiliation
 
 * **William Steve Rodriguez Villamizar (Wisrovi)**
-* **Cargo:** Principal AI Engineer & Applied AI Solutions Architect | Scientific Researcher
+* **Role:** Principal AI Engineer & Applied AI Solutions Architect | Scientific Researcher
 * 📧 **Email:** [wisrovi.rodriguez@gmail.com](mailto:wisrovi.rodriguez@gmail.com)
-* 🌐 **Portal Oficial:** [wisrovi.dev](https://wisrovi.dev)
+* 🌐 **Official Portal:** [wisrovi.dev](https://wisrovi.dev)
 * 💼 **LinkedIn:** [wisrovi-rodriguez](https://www.linkedin.com/in/wisrovi-rodriguez/)
 * 🆔 **ORCID:** [0009-0005-0710-1861](https://orcid.org/0009-0005-0710-1861)
 * 📦 **PyPI:** [pypi.org/user/wisrovi/](https://pypi.org/user/wisrovi/)

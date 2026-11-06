@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.2] - 2026-11-06
+### Added
+- **WPipe Architectural Compliance:** Refactored `wyoloservice2_mcp` to 100% compliance with WPipe architecture and QA validation rules.
+- **Dedicated DAG Pipeline:** Created `mcp_server_pipeline` in `pipelines.py` with `mcp_startup_step`.
+- **Modular Layout:** Decomposed `server.py` into dedicated SRP utility modules under `src/wyolo_mcp/utils/` (`cluster_tools.py`, `dataset_tools.py`, `training_tools.py`, `estimator_tools.py`, `study_tools.py`, `artifact_tools.py`, `invoker_tools.py`, `test_launcher.py`, `xai_tools.py`), strictly adhering to the 200-line SRP ceiling.
+- **Typed DTOs:** Created Pydantic DTO models in `dto/training_config_dto.py` for structured study configuration.
+
 ## [0.5.1] - 2026-11-03
 ### Added
 - **Vision Style Injection in Generated YAML:** `generate_training_yaml` now explicitly emits `style` parameter matching `config.task` (`detect`, `segment`, `classify`, etc.) to drive downstream Optuna objective fitness auto-mapping.
